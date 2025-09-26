@@ -1,3 +1,4 @@
+import { clients } from "./server.js";
 // helper function to build command in predefined structure
 export function buildCommand(command, headers, body) {
   const startLine = `CHAT/1.0 ${command}`;
@@ -12,7 +13,6 @@ export function buildCommand(command, headers, body) {
 
 export function parseMessage(message) {
   const parts = message.split("\r\n\r\n");
-  console.log("part :", parts);
   if (parts.length < 2) return null; // Missing  body
 
   const headerPart = parts[0];
@@ -38,16 +38,6 @@ export function parseMessage(message) {
   return { protocolVersion, command, headers, body };
 }
 
-/**
- *  CHAT/1.0 AUTH
-    User:rahul
-    Token:123A
-    content-length:0
-
-    body
- *
- */
-
 export function handleMessage(socket, parsedMessage) {
   switch (parsedMessage.command) {
     case "AUTH":
@@ -62,9 +52,55 @@ export function handleMessage(socket, parsedMessage) {
     case "LEAVE":
       handleLeave(socket, parsedMessage);
       break;
-    default:
-      console.log("No command Matched...");
   }
+}
+function handleJoin(socket, parsedMessage) {
+  socket.joined = true;
+  socket.write(
+    formatResponse(
+      "OK",
+      "JOIN",
+      {
+        "content-length": 0,
+      },
+      ""
+    )
+  );
+}
+function handleSend(socket, parsedMessage) {
+  const msgToBroadcast = `${socket.username}:${parsedMessage.body}`;
+  clients.map(client => {
+    // if (client.username !== socket.username) {
+    client.write(
+      buildCommand(
+        "MESSAGE",
+        {
+          "content-length": msgToBroadcast.length,
+        },
+        msgToBroadcast
+      )
+    );
+  });
+}
+function handleLeave(socket, parsedMessage) {
+  // braodcast that user is leaving
+  const msgToBroadcast = `${socket.username} left the chat...`;
+
+  clients.map(client => {
+    if (client.username !== socket.username) {
+      client.write(
+        buildCommand(
+          "MESSAGE",
+          {
+            "content-length": msgToBroadcast.length,
+          },
+          msgToBroadcast
+        )
+      );
+    }
+  });
+  // end the socket for that user
+  socket.end();
 }
 
 function handleAuth(socket, parsedMessage) {
@@ -112,8 +148,5 @@ function formatResponse(command, responseFor, headers, body = "", user) {
     headerLines.push(`${key}: ${headers[key]}`);
   }
 
-  console.log(startLine);
-  console.log(headerLines);
-  console.log(body);
   return `${startLine}\r\n${headerLines.join("\r\n")}\r\n\r\n${body}`;
 }

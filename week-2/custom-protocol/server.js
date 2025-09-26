@@ -4,7 +4,7 @@ import { handleMessage, parseMessage } from "./helper.js";
 const PORT = 1337;
 const HOST = "localhost";
 
-const clients = [];
+export const clients = [];
 const server = net.createServer(socket => {
   console.log("Client Connected...🍻");
 
