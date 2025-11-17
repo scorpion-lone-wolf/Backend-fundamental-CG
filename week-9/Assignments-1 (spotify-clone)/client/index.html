@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Song Player</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+        padding: 24px;
+        background: #f7f7fb;
+        color: #111;
+      }
+      h1 {
+        margin-bottom: 12px;
+      }
+      #list {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 720px;
+      }
+      .song {
+        padding: 10px 12px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      }
+      .song button {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background: #fff;
+        cursor: pointer;
+      }
+      .song button.playing {
+        background: #0b84ff;
+        color: white;
+        border-color: #0b84ff;
+      }
+      audio {
+        width: 100%;
+        margin-top: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>My Songs</h1>
+    <div id="status">Loading songs…</div>
+
+    <div id="list" aria-live="polite"></div>
+
+    <audio id="player" controls preload="none"></audio>
+
+    <script>
+      const listEl = document.getElementById("list");
+      const statusEl = document.getElementById("status");
+      const player = document.getElementById("player");
+      let currentPlaying = null;
+
+      async function loadSongs() {
+        try {
+          const res = await fetch("http://localhost:3000/songs");
+          if (!res.ok) throw new Error("Failed to fetch songs");
+          const payload = await res.json();
+          const songs = payload.data || [];
+          statusEl.textContent = songs.length ? `Found ${songs.length} song(s)` : "No songs found";
+          renderList(songs);
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Error loading songs: " + err.message;
+        }
+      }
+
+      function renderList(songs) {
+        listEl.innerHTML = "";
+        songs.forEach(name => {
+          const row = document.createElement("div");
+          row.className = "song";
+
+          const title = document.createElement("div");
+          title.textContent = name;
+          title.style.marginRight = "12px";
+          title.style.flex = "1";
+          title.style.overflow = "hidden";
+          title.style.textOverflow = "ellipsis";
+          title.style.whiteSpace = "nowrap";
+
+          const btn = document.createElement("button");
+          btn.textContent = "Play";
+          btn.addEventListener("click", () => playSong(name, btn));
+
+          row.appendChild(title);
+          row.appendChild(btn);
+          listEl.appendChild(row);
+        });
+      }
+
+      function playSong(filename, btn) {
+        // stop previous UI
+        if (currentPlaying && currentPlaying.button) {
+          currentPlaying.button.classList.remove("playing");
+          currentPlaying.button.textContent = "Play";
+        }
+
+        // set new src (encode filename)
+        const encoded = encodeURIComponent(filename);
+        player.src = `http://localhost:3000/songs/${encoded}`;
+        player.play().catch(err => {
+          console.error("Play error:", err);
+        });
+
+        // update UI
+        btn.classList.add("playing");
+        btn.textContent = "Playing";
+        currentPlaying = { filename, button: btn };
+      }
+
+      // when audio pauses/stops, update button text
+      player.addEventListener("pause", () => {
+        if (currentPlaying && currentPlaying.button) {
+          currentPlaying.button.classList.remove("playing");
+          currentPlaying.button.textContent = "Play";
+        }
+      });
+
+      player.addEventListener("ended", () => {
+        if (currentPlaying && currentPlaying.button) {
+          currentPlaying.button.classList.remove("playing");
+          currentPlaying.button.textContent = "Play";
+        }
+        currentPlaying = null;
+      });
+
+      loadSongs();
+    </script>
+  </body>
+</html>

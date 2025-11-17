@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Streaming Demo</title>
+    <style>
+      body {
+        background: #111;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        font-family: sans-serif;
+      }
+      video {
+        width: 80%;
+        max-width: 800px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎥 Video Streaming Example</h1>
+
+    <!-- The video element -->
+    <video id="videoPlayer" controls preload="metadata">
+      <source src="http://localhost:3000/video" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    <script>
+      // Optional: Log events for debugging
+      const video = document.getElementById("videoPlayer");
+      video.addEventListener("waiting", () => console.log("⏳ Buffering..."));
+      video.addEventListener("playing", () => console.log("▶️ Playing"));
+    </script>
+  </body>
+</html>
