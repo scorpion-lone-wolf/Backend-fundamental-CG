@@ -18,8 +18,8 @@ app.get("/pdf", (req, res) => {
 
     // Set headers for PDF
     res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader("Content-Disposition", `inline; filename="${pdfFileName}"`); // this will open and view the pdf in same browser
-    res.setHeader("Content-Disposition", `attachment; filename="${pdfFileName}"`); // this will download the pdf.
+    res.setHeader("Content-Disposition", `inline; filename="${pdfFileName}"`); // this will open and view the pdf in same browser
+    //res.setHeader("Content-Disposition", `attachment; filename="${pdfFileName}"`); // this will download the pdf.
 
     res.send(data); // Send entire file as response
   });
